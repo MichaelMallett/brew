@@ -70,10 +70,26 @@ class GitHubReleaseDownloadStrategyTests < Homebrew::TestCase
 
   def test_initialize
     assert_equal "token", @strategy.instance_variable_get(:@github_token)
-    assert_equal "owner", @strategy.instance_variable_get(:@owner)
-    assert_equal "repo", @strategy.instance_variable_get(:@repo)
-    assert_equal "tag", @strategy.instance_variable_get(:@tag)
-    assert_equal "foo_v0.1.0_darwin_amd64.tar.gz", @strategy.instance_variable_get(:@filename)
+  end
+
+  def test_parse_releases_url_pattern
+    resource = ResourceDouble.new("https://github.com/owner/repo/releases/download/tag/foo_v0.1.0_darwin_amd64.tar.gz")
+    strategy = GitHubReleaseDownloadStrategy.new("foo", resource)
+
+    assert_equal "owner", strategy.instance_variable_get(:@owner)
+    assert_equal "repo", strategy.instance_variable_get(:@repo)
+    assert_equal "tag", strategy.instance_variable_get(:@tag)
+    assert_equal "foo_v0.1.0_darwin_amd64.tar.gz", strategy.instance_variable_get(:@filename)
+  end
+
+  def test_parse_archive_url_pattern
+    resource = ResourceDouble.new("https://github.com/Homebrew/brew/archive/1.1.5.tar.gz")
+    strategy = GitHubReleaseDownloadStrategy.new("foo", resource)
+
+    assert_equal "Homebrew", strategy.instance_variable_get(:@owner)
+    assert_equal "brew", strategy.instance_variable_get(:@repo)
+    assert_equal "1.1.5", strategy.instance_variable_get(:@tag)
+    assert_equal "1.1.5.tar.gz", strategy.instance_variable_get(:@filename)
   end
 
   def test_asset_url

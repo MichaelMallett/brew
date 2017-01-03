@@ -549,10 +549,7 @@ class GitHubReleaseDownloadStrategy < CurlDownloadStrategy
     @github_token = ENV["HOMEBREW_GITHUB_API_TOKEN"]
     raise CurlDownloadStrategyError, "Environmental variable HOMEBREW_GITHUB_API_TOKEN is required." unless @github_token
 
-    url_pattern = %r|https://github.com/(\S+)/(\S+)/releases/download/(\S+)/(\S+)|
-    raise CurlDownloadStrategyError, "Invalid url pattern for GitHub Release." unless @url =~ url_pattern
-
-    _, @owner, @repo, @tag, @filename = *(@url.match(url_pattern))
+    parse_url_pattern
   end
 
   def _fetch
@@ -563,6 +560,20 @@ class GitHubReleaseDownloadStrategy < CurlDownloadStrategy
   end
 
   private
+
+  def parse_url_pattern
+    releases_url_pattern = %r{https://github.com/(\S+)/(\S+)/releases/download/(\S+)/(\S+)}
+    archive_url_pattern = %r{https://github.com/(\S+)/(\S+)/archive/((\S+)\.(tar\.gz|zip))}
+
+    case @url
+    when releases_url_pattern
+      _, @owner, @repo, @tag, @filename = *(@url.match(releases_url_pattern))
+    when archive_url_pattern
+      _, @owner, @repo, @filename, @tag = *(@url.match(archive_url_pattern))
+    else
+      raise CurlDownloadStrategyError, "Invalid url pattern for GitHub Release."
+    end
+  end
 
   def asset_url
     "https://#{@github_token}@api.github.com/repos/#{@owner}/#{@repo}/releases/assets/#{asset_id}"
